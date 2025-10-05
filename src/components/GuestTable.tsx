@@ -56,7 +56,7 @@ export const GuestTable: React.FC<GuestTableProps> = ({
   // Estado para el nuevo modal de información y asignación de pulseras
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [currentGuest, setCurrentGuest] = useState<any>(null);
-  const [detailViewGuest, setDetailViewGuest] = useState<any | null>(null);
+  // Eliminamos el estado de vista detallada
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const { toast } = useToast();
@@ -194,7 +194,8 @@ export const GuestTable: React.FC<GuestTableProps> = ({
       guestData["Venís acompañado"] ||
       guestData["venis acompañado"] ||
       guestData["Venís Acompañado"];
-    return val?.toString().toLowerCase() === "si";
+    const normalizedVal = val?.toString().toLowerCase();
+    return normalizedVal === "sí" || normalizedVal === "si";
   };
 
   // Handler para eliminar invitado
@@ -406,47 +407,7 @@ export const GuestTable: React.FC<GuestTableProps> = ({
     }
   };
 
-  // Función para editar un campo
-  const handleEditField = async (fieldName: string, newValue: string) => {
-    if (!detailViewGuest) return;
-
-    try {
-      const guestId = getGuestId(detailViewGuest, 0);
-      const updatedGuestData = {
-        ...detailViewGuest,
-        [fieldName]: newValue,
-      };
-
-      const { error } = await supabase
-        .from("guests")
-        .update({
-          guest_data: updatedGuestData,
-        })
-        .eq("guest_id", guestId);
-
-      if (error) throw error;
-
-      // Actualizar el estado local
-      setDetailViewGuest(updatedGuestData);
-      setEditingField(null);
-      setEditValue("");
-
-      toast({
-        title: "Campo actualizado",
-        description: `${fieldName} ha sido actualizado correctamente.`,
-      });
-
-      // Recargar datos
-      loadGuestsFromSupabase();
-    } catch (error: any) {
-      console.error("Error updating field:", error);
-      toast({
-        title: "Error al actualizar",
-        description: "No se pudo actualizar el campo.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Función para editar un campo - Eliminada ya que no se usa la vista detallada
 
   // 1. Define el array fijo de columnas fuera del componente (o dentro, pero fuera del render)
   const ALL_COLUMNS = [
@@ -457,6 +418,8 @@ export const GuestTable: React.FC<GuestTableProps> = ({
     "Venís acompañado",
     "Apellido y Nombre del acompañante",
     "DNI Acompañante",
+    "Número de pulsera",
+    "Número de pulsera acompañante",
     "Contacto de Emergencia",
     "Tenés carnet Vigente?",
     "Tenés Seguro vigente?",
@@ -470,209 +433,7 @@ export const GuestTable: React.FC<GuestTableProps> = ({
     "Vas a realizar las rodadas",
   ];
 
-  // Scroll al inicio cuando se muestra la vista de detalle
-  useEffect(() => {
-    if (detailViewGuest) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [detailViewGuest]);
-
-  // Si hay un invitado seleccionado para ver detalles, mostrar la vista de detalle
-  if (detailViewGuest) {
-    const guestId = getGuestId(detailViewGuest, 0);
-    const isConfirmed = confirmedGuests.has(guestId);
-
-    return (
-      <Card className="p-4 sm:p-6 lg:p-8 relative">
-        {/* Botón flotante para asignar pulseras */}
-        {detailViewGuest && (
-          <div className="fixed bottom-6 right-6 z-50">
-            <Button
-              onClick={() => {
-                const guestId = getGuestId(detailViewGuest, 0);
-                setSelectedGuest({
-                  id: guestId,
-                  data: detailViewGuest,
-                  hasCompanion: hasCompanion(detailViewGuest),
-                });
-                setBraceletNumber(detailViewGuest._bracelet_number || "");
-                setCompanionBraceletNumber(
-                  detailViewGuest._companion_bracelet_number || ""
-                );
-                setDialogOpen(true);
-              }}
-              size="lg"
-              className="bg-primary hover:bg-primary/90 shadow-lg flex items-center gap-2"
-            >
-              <CheckCircle2 className="h-5 w-5" />
-              Asignar Pulseras
-            </Button>
-          </div>
-        )}
-        <div className="flex flex-col gap-4" id="detail-view-top">
-          {/* Header con botón de volver */}
-          <div className="flex items-center justify-between gap-4">
-            <Button
-              onClick={() => setDetailViewGuest(null)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <X className="h-4 w-4" />
-              Volver a la lista
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  // Abrir diálogo para ingresar pulseras directamente
-                  console.log("Abriendo diálogo para asignar pulseras");
-                  setSelectedGuest({
-                    id: guestId,
-                    data: detailViewGuest,
-                    hasCompanion: hasCompanion(detailViewGuest),
-                  });
-                  setBraceletNumber(detailViewGuest._bracelet_number || "");
-                  setCompanionBraceletNumber(
-                    detailViewGuest._companion_bracelet_number || ""
-                  );
-                  setDialogOpen(true);
-                }}
-                variant="primary"
-                size="sm"
-                className={`${
-                  isConfirmed
-                    ? "bg-success hover:bg-success/90"
-                    : "bg-primary hover:bg-primary/90"
-                }`}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                {isConfirmed ? "Editar Pulseras" : "Asignar Pulseras"}
-              </Button>
-              <Badge
-                variant={isConfirmed ? "default" : "secondary"}
-                className={`${
-                  isConfirmed
-                    ? "bg-success/20 text-success border-success/30"
-                    : ""
-                }`}
-              >
-                {isConfirmed ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 mr-1" />
-                    Confirmado
-                  </>
-                ) : (
-                  <>
-                    <Clock className="h-4 w-4 mr-1" />
-                    Pendiente
-                  </>
-                )}
-              </Badge>
-            </div>
-          </div>
-
-          {/* Título del invitado */}
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-white">
-              {detailViewGuest["Apellido y Nombre"] || guestId}
-            </h2>
-          </div>
-
-          {/* Información detallada */}
-          <div className="space-y-3">
-            {ALL_COLUMNS.map((fieldName) => (
-              <div
-                key={fieldName}
-                className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 bg-background/50 rounded-lg"
-              >
-                <div className="sm:w-1/3">
-                  <span className="font-semibold text-orange-400 text-sm sm:text-base">
-                    {fieldName}:
-                  </span>
-                </div>
-                <div className="sm:w-2/3 flex items-center gap-2">
-                  {editingField === fieldName ? (
-                    <div className="flex items-center gap-2 w-full">
-                      <Input
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="flex-1 text-white"
-                        autoFocus
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => handleEditField(fieldName, editValue)}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Save className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingField(null);
-                          setEditValue("");
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 w-full">
-                      <span className="text-white flex-1 break-words">
-                        {detailViewGuest[fieldName]?.toString() || "-"}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingField(fieldName);
-                          setEditValue(
-                            detailViewGuest[fieldName]?.toString() || ""
-                          );
-                        }}
-                        className="text-orange-400 hover:text-orange-300"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {/* Información de pulseras */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 bg-background/50 rounded-lg">
-              <div className="sm:w-1/3">
-                <span className="font-semibold text-orange-400 text-sm sm:text-base">
-                  Pulsera:
-                </span>
-              </div>
-              <div className="sm:w-2/3">
-                <span className="text-white break-words">
-                  {detailViewGuest._bracelet_number || "-"}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 bg-background/50 rounded-lg">
-              <div className="sm:w-1/3">
-                <span className="font-semibold text-orange-400 text-sm sm:text-base">
-                  Pulsera Acompañante:
-                </span>
-              </div>
-              <div className="sm:w-2/3">
-                <span className="text-white break-words">
-                  {detailViewGuest._companion_bracelet_number || "-"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
-  }
+  // Eliminamos la vista detallada de invitados
 
   return (
     <Card className="p-4 sm:p-6 lg:p-8">
@@ -707,12 +468,22 @@ export const GuestTable: React.FC<GuestTableProps> = ({
             return (
               <div
                 key={index}
-                className={`p-4 rounded-lg border transition-all hover:bg-background/80 ${
+                className={`p-4 rounded-lg border transition-all hover:bg-background/80 cursor-pointer ${
                   isConfirmed
-                    ? "bg-success/10 border-success/30"
-                    : "bg-background/50 border-gray-600"
-                }`}
-                // Eliminado cursor-pointer y onClick para evitar abrir modal al hacer click en el invitado
+                    ? "bg-success/10 border-success/30 border-l-4 border-l-green-500"
+                    : "bg-background/50 border-gray-600 border-l-4 border-l-gray-500"
+                } ${index % 2 === 0 ? "bg-gray-900/40" : "bg-gray-950/20"} shadow-md my-3`}
+                onClick={() => {
+                  // Abrir directamente el modal para asignar pulseras
+                  setCurrentGuest({
+                    id: guestId,
+                    data: row,
+                    hasCompanion: hasCompanion(row),
+                  });
+                  setBraceletNumber(row._bracelet_number || "");
+                  setCompanionBraceletNumber(row._companion_bracelet_number || "");
+                  setInfoModalOpen(true);
+                }}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -816,14 +587,25 @@ export const GuestTable: React.FC<GuestTableProps> = ({
                       key === "confirmed_at"
                     )
                       return null;
-                    // Si es el campo "Venís acompañado", usar un select para facilitar la edición
-                    if (key.toLowerCase().includes("venís acompañado")) {
+                      
+                    // No mostrar campos de acompañante si "Venís acompañado" es "No"
+                    const isCompanionField = key === "DNI Acompañante" || 
+                                            key === "Apellido y Nombre del acompañante";
+                    
+                    if (isCompanionField && 
+                        (!currentGuest.data["Venís acompañado"] || 
+                         currentGuest.data["Venís acompañado"].toString().toLowerCase() === "no")) {
+                      return null;
+                    }
+                    
+                    // Si es un campo booleano (Venís acompañado o Sos alérgico), usar un select para facilitar la edición
+                    if (key.toLowerCase().includes("venís acompañado") || key.toLowerCase().includes("sos alérgico")) {
                       return (
                         <div key={key} className="space-y-1">
                           <Label className="text-sm text-gray-400">{key}</Label>
                           <select
                             className="font-medium w-full bg-background text-white border rounded px-2 py-1"
-                            value={value?.toString().toLowerCase() === "si" ? "si" : "no"}
+                            value={value?.toString().toLowerCase() === "sí" || value?.toString().toLowerCase() === "si" ? "Sí" : "No"}
                             onChange={(e) => {
                               setCurrentGuest((prev: any) => ({
                                 ...prev,
@@ -831,12 +613,15 @@ export const GuestTable: React.FC<GuestTableProps> = ({
                                   ...prev.data,
                                   [key]: e.target.value,
                                 },
-                                hasCompanion: e.target.value.toLowerCase() === "si",
+                                // Actualizar hasCompanion solo si es el campo de acompañado
+                                ...(key.toLowerCase().includes("acompañado") ? {
+                                  hasCompanion: e.target.value === "Sí",
+                                } : {}),
                               }));
                             }}
                           >
-                            <option value="si">Sí</option>
-                            <option value="no">No</option>
+                            <option value="Sí">Sí</option>
+                            <option value="No">No</option>
                           </select>
                         </div>
                       );
@@ -886,7 +671,9 @@ export const GuestTable: React.FC<GuestTableProps> = ({
                       onChange={(e) => setBraceletNumber(e.target.value)}
                     />
                   </div>
-                  {currentGuest.hasCompanion && (
+                  {currentGuest.hasCompanion && 
+                   currentGuest.data["Venís acompañado"] && 
+                   currentGuest.data["Venís acompañado"].toString().toLowerCase() !== "no" && (
                     <div className="space-y-2">
                       <Label htmlFor="companion-bracelet-modal">
                         Número de Pulsera Acompañante *
@@ -1047,108 +834,8 @@ export const GuestTable: React.FC<GuestTableProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Modal de información y asignación de pulseras */}
-      <Dialog open={infoModalOpen} onOpenChange={setInfoModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl">
-              Información del Invitado
-            </DialogTitle>
-            <DialogDescription>
-              Visualiza y edita la información del invitado, y asigna pulseras.
-            </DialogDescription>
-          </DialogHeader>
-
-          {currentGuest && (
-            <div className="space-y-6">
-              {/* Información editable del invitado */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
-                {Object.entries(currentGuest.data).map(
-                  ([key, value]: [string, any]) => {
-                    if (
-                      key.startsWith("_") ||
-                      key === "guest_id" ||
-                      key === "confirmed" ||
-                      key === "confirmed_at"
-                    )
-                      return null;
-                    return (
-                      <div key={key} className="space-y-1">
-                        <Label className="text-sm text-gray-400">{key}</Label>
-                        <Input
-                          className="font-medium"
-                          value={value?.toString() || "-"}
-                          onChange={(e) => {
-                            setCurrentGuest((prev: any) => ({
-                              ...prev,
-                              data: {
-                                ...prev.data,
-                                [key]: e.target.value,
-                              },
-                            }));
-                          }}
-                        />
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-
-              {/* Sección de asignación de pulseras */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
-                  Asignación de Pulseras
-                </h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bracelet-modal">
-                      Número de Pulsera Principal *
-                    </Label>
-                    <Input
-                      id="bracelet-modal"
-                      placeholder="Ej: 001"
-                      value={braceletNumber}
-                      onChange={(e) => setBraceletNumber(e.target.value)}
-                    />
-                  </div>
-                  {currentGuest.hasCompanion && (
-                    <div className="space-y-2">
-                      <Label htmlFor="companion-bracelet-modal">
-                        Número de Pulsera Acompañante *
-                      </Label>
-                      <Input
-                        id="companion-bracelet-modal"
-                        placeholder="Ej: 002"
-                        value={companionBraceletNumber}
-                        onChange={(e) =>
-                          setCompanionBraceletNumber(e.target.value)
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="pt-4">
-            <Button variant="outline" onClick={() => setInfoModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => {
-                if (currentGuest) {
-                  handleSaveBracelets();
-                  setInfoModalOpen(false);
-                }
-              }}
-              className="bg-primary hover:bg-primary/90"
-            >
-              Confirmar y Guardar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Este segundo modal de información y asignación de pulseras es redundante y debe eliminarse */}
+      {/* El modal anterior ya contiene toda la funcionalidad necesaria */}
 
       {/* Diálogo para asignar pulseras (original) */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

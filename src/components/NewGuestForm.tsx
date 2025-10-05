@@ -23,6 +23,8 @@ export const NewGuestForm: React.FC<NewGuestFormProps> = ({ headers = [] }) => {
     "Venís acompañado": "No",
     "Apellido y Nombre del acompañante": "", 
     "DNI Acompañante": "", 
+    "Número de pulsera": "",
+    "Número de pulsera acompañante": "",
     "Moto en la que venís": "", 
     "Sos alérgico a algo?": "No",
     "A que sos alérgico?": "", 
@@ -43,7 +45,11 @@ export const NewGuestForm: React.FC<NewGuestFormProps> = ({ headers = [] }) => {
   const requiredFields = ["DNI", "Apellido y Nombre", "Teléfono"];
 
   // Campos que dependen de "Venís acompañado"
-  const companionFields = ["DNI Acompañante", "Apellido y Nombre del acompañante"];
+  const companionFields = [
+    "DNI Acompañante", 
+    "Apellido y Nombre del acompañante",
+    "Número de pulsera acompañante"
+  ];
 
   // Campos que son de tipo Sí/No
   const yesNoFields = [
@@ -96,6 +102,29 @@ export const NewGuestForm: React.FC<NewGuestFormProps> = ({ headers = [] }) => {
       return;
     }
 
+    // Validar número de pulsera si viene acompañado
+    if (hasCompanion) {
+      if (!formData["Número de pulsera"]) {
+        toast({
+          title: "Campo requerido",
+          description: "Por favor ingrese el número de pulsera",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!formData["Número de pulsera acompañante"]) {
+        toast({
+          title: "Campo requerido",
+          description: "Por favor ingrese el número de pulsera del acompañante",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
       // Generar un ID único basado en DNI
       const guestId = `INV-${formData["DNI"]}`;
@@ -137,6 +166,8 @@ export const NewGuestForm: React.FC<NewGuestFormProps> = ({ headers = [] }) => {
         "Dirección de correo electrónico": "", 
         "Ciudad de donde nos visitas": "", 
         "Apellido y Nombre del acompañante": "", 
+        "Número de pulsera": "",
+        "Número de pulsera acompañante": "",
         "Tenés alguna restricción alimentaria?": "No", 
         "Cena show día sábado 11 (no incluye bebida)": "No" 
       });
@@ -187,13 +218,36 @@ export const NewGuestForm: React.FC<NewGuestFormProps> = ({ headers = [] }) => {
       return false;
     }
     
+    // Mostrar el campo de número de pulsera siempre
+    if (field === "Número de pulsera") {
+      return true;
+    }
+    
     return true;
   };
 
   // Determinar si un campo es requerido
   const isRequired = (field: string) => {
-    return requiredFields.includes(field);
+    return requiredFields.includes(field) || 
+           (hasCompanion && field === "Número de pulsera") || 
+           (hasCompanion && field === "Número de pulsera acompañante");
   };
+
+  // Ordenar los campos para que los campos de acompañante aparezcan juntos
+  const sortedFields = [...fieldsToShow].sort((a, b) => {
+    // Poner "Venís acompañado" primero entre los campos relacionados con acompañante
+    if (a === "Venís acompañado") return -1;
+    if (b === "Venís acompañado") return 1;
+    
+    // Agrupar los campos de acompañante
+    const aIsCompanion = isCompanionField(a);
+    const bIsCompanion = isCompanionField(b);
+    
+    if (aIsCompanion && !bIsCompanion) return 1;
+    if (!aIsCompanion && bIsCompanion) return -1;
+    
+    return 0;
+  });
 
   return (
     <Card className="p-4 border-dashed border-primary/50">
@@ -204,7 +258,7 @@ export const NewGuestForm: React.FC<NewGuestFormProps> = ({ headers = [] }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {fieldsToShow.map((field) => {
+          {sortedFields.map((field) => {
             // Si este campo no debe mostrarse según las condiciones, no lo incluimos
             if (!shouldShowField(field)) return null;
 
