@@ -2,78 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
+/* Design system for Motorcycle Event Validation App */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 15% 8%;
+    --foreground: 210 40% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 15% 12%;
+    --card-foreground: 210 40% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 15% 12%;
+    --popover-foreground: 210 40% 95%;
 
-    --primary: 18 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 18 100% 60%;
+    --primary: 25 95% 55%;
+    --primary-foreground: 220 15% 8%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 210 40% 95%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 220 15% 15%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 14 100% 57%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 15 85% 60%;
+    --accent-foreground: 220 15% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 18 100% 50%;
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 15% 8%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 16%;
+    --ring: 25 95% 55%;
 
     --radius: 0.75rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(18 100% 50%), hsl(14 100% 57%));
-    --gradient-hero: linear-gradient(180deg, hsl(0 0% 7%) 0%, hsl(0 0% 12%) 100%);
-    --shadow-glow: 0 0 40px hsla(18 100% 50% / 0.3);
+    /* Custom motorcycle theme colors */
+    --moto-chrome: 210 20% 85%;
+    --moto-steel: 220 15% 25%;
+    --moto-engine: 220 20% 10%;
+    --moto-fire: 15 85% 60%;
+    --moto-electric: 200 100% 50%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-steel: linear-gradient(135deg, hsl(var(--moto-steel)), hsl(var(--moto-chrome)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(142 76% 45%));
+
+    /* Shadows */
+    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.3);
+    --shadow-success: 0 0 20px hsl(var(--success) / 0.4);
+    --shadow-card: 0 8px 32px hsl(220 15% 5% / 0.3);
+
+    /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .dark {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 18 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 18 100% 60%;
-
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
-
-    --accent: 14 100% 57%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 18 100% 50%;
   }
 }
 
@@ -83,57 +69,58 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground font-sans;
+    background-image: 
+      radial-gradient(circle at 25% 25%, hsl(var(--primary) / 0.1) 0%, transparent 25%),
+      radial-gradient(circle at 75% 75%, hsl(var(--accent) / 0.1) 0%, transparent 25%);
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight;
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary rounded-full;
   }
 }
 
-@layer utilities {
-  .gradient-primary {
-    background: var(--gradient-primary);
-  }
-  
-  .gradient-hero {
-    background: var(--gradient-hero);
+/* Component variants */
+@layer components {
+  .btn-moto {
+    @apply bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-glow transition-all duration-300 transform hover:scale-105;
   }
 
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
+  .btn-confirm {
+    @apply bg-gradient-to-r from-success to-green-500 text-success-foreground font-semibold px-4 py-2 rounded-lg shadow-lg hover:shadow-success transition-all duration-300;
   }
 
-  .transition-smooth {
-    transition: var(--transition-smooth);
+  .card-moto {
+    @apply bg-card border border-border rounded-xl p-6 shadow-card backdrop-blur-sm;
   }
-  
-  @keyframes blink {
-  0% { color: hsl(195, 100%, 50%); }
-  50% { color: hsl(210, 100%, 50%); }
-  100% { color: hsl(195, 100%, 50%); }
+
+  .input-moto {
+    @apply bg-input border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200;
+  }
+
+  .table-row-confirmed {
+    @apply bg-success/10 border-success/30;
+  }
+
+  .pulse-success {
+    animation: pulse-success 2s ease-in-out infinite;
+  }
 }
 
-.blink-blue {
-  animation: blink 3s infinite;
-  color: hsl(195, 100%, 50%);
-  font-weight: bold;
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(0px);
+@keyframes pulse-success {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--success) / 0.4);
   }
   50% {
-    transform: translateY(-10px);
+    box-shadow: 0 0 0 10px hsl(var(--success) / 0);
   }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-.float-animation {
-  animation: float 3s ease-in-out infinite;
-}
 }

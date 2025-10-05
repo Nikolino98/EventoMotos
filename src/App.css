@@ -40,3 +40,23 @@
 .read-the-docs {
   color: #888;
 }
+
+@keyframes moto-slide {
+  0% {
+    opacity: 0;
+    transform: translateX(-400px) scale(0.95);
+  }
+  10% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(400px) scale(1.05);
+  }
+}
+.animate-moto-slide {
+  animation: moto-slide 1.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

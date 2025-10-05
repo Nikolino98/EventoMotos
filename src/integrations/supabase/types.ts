@@ -14,33 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      attendees: {
+      guests: {
         Row: {
-          bracelet_number: string | null
-          companion_bracelet_number: string | null
-          created_at: string | null
-          file_name: string | null
+          confirmed: boolean
+          confirmed_at: string | null
+          created_at: string
+          guest_data: Json
+          guest_id: string
           id: string
-          row_data: Json
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
-          bracelet_number?: string | null
-          companion_bracelet_number?: string | null
-          created_at?: string | null
-          file_name?: string | null
+          confirmed?: boolean
+          confirmed_at?: string | null
+          created_at?: string
+          guest_data: Json
+          guest_id: string
           id?: string
-          row_data: Json
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
-          bracelet_number?: string | null
-          companion_bracelet_number?: string | null
-          created_at?: string | null
-          file_name?: string | null
+          confirmed?: boolean
+          confirmed_at?: string | null
+          created_at?: string
+          guest_data?: Json
+          guest_id?: string
           id?: string
-          row_data?: Json
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

@@ -688,18 +688,6 @@ export const GuestTable: React.FC<GuestTableProps> = ({
             />
             <Button 
               variant="outline" 
-              className="whitespace-nowrap"
-              onClick={() => {
-                // Buscar el componente NewGuestForm y cambiar su estado directamente
-                const event = new CustomEvent('openNewGuestForm');
-                document.dispatchEvent(event);
-              }}
-            >
-              <UserCheck className="mr-2 h-4 w-4" />
-              Añadir invitado
-            </Button>
-            <Button 
-              variant="outline" 
               className="whitespace-nowrap ml-2"
               onClick={handleExportToXLSX}
             >
