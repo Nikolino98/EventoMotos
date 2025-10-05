@@ -47,21 +47,6 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
-        },
-        warning: {
-          DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
-        },
-        moto: {
-          chrome: "hsl(var(--moto-chrome))",
-          steel: "hsl(var(--moto-steel))",
-          engine: "hsl(var(--moto-engine))",
-          fire: "hsl(var(--moto-fire))",
-          electric: "hsl(var(--moto-electric))",
-        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
