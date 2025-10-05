@@ -15,9 +15,10 @@ interface NewGuestFormProps {
 }
 
 export const NewGuestForm: React.FC<NewGuestFormProps> = ({ headers, onGuestAdded }) => {
-  // Inicializar isOpen como false pero asegurar que el botón siempre sea visible
+  // Inicializar isOpen como false - el botón siempre será visible, solo controla la visibilidad del formulario
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAddButton, setShowAddButton] = useState(true);
   
   // Escuchar el evento personalizado para abrir el formulario
   React.useEffect(() => {
@@ -182,22 +183,22 @@ export const NewGuestForm: React.FC<NewGuestFormProps> = ({ headers, onGuestAdde
     "Apellido y Nombre del acompañante"
   ];
 
-  // Renderizar siempre el botón y el formulario, pero controlando la visibilidad del formulario
+  // Renderizar siempre el botón y el formulario, pero controlando si está plegado o desplegado
   return (
-    <div>
-      {/* El botón siempre es visible */}
+    <div className="mb-6">
+      {/* El botón siempre es visible y ahora funciona como toggle para plegar/desplegar */}
       <Button 
         variant="outline" 
-        className="mb-4 w-full"
+        className="mb-4 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold"
         onClick={() => setIsOpen(!isOpen)}
         id="add-guest-button"
       >
         <UserPlus className="mr-2 h-4 w-4" />
-        Añadir nuevo invitado
+        {isOpen ? "Ocultar formulario" : "Añadir nuevo invitado"}
       </Button>
       
-      {/* El formulario solo se muestra cuando isOpen es true */}
-      {isOpen && (
+      {/* El formulario siempre es visible pero con altura 0 cuando está plegado */}
+      <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-[2000px]' : 'max-h-0'}`}>
         <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <h2 className="text-xl font-bold">Añadir nuevo invitado</h2>
@@ -310,7 +311,7 @@ export const NewGuestForm: React.FC<NewGuestFormProps> = ({ headers, onGuestAdde
             </div>
           </form>
         </Card>
-      )}
+      </div>
     </div>
   );
 };
