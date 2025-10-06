@@ -800,7 +800,7 @@ export const GuestTable: React.FC<GuestTableProps> = ({
                   const { error } = await supabase
                     .from("guests")
                     .update({
-                      ...currentGuest.data,
+                      guest_data: currentGuest.data,
                       bracelet_number: braceletNumber.trim(),
                       companion_bracelet_number: currentGuest.hasCompanion
                         ? companionBraceletNumber.trim()
@@ -818,9 +818,10 @@ export const GuestTable: React.FC<GuestTableProps> = ({
                   });
                   loadGuestsFromSupabase();
                 } catch (error: any) {
+                  console.error("Error al guardar:", error);
                   toast({
                     title: "Error al guardar",
-                    description: "No se pudo guardar la información.",
+                    description: error.message || "No se pudo guardar la información.",
                     variant: "destructive",
                   });
                 }
