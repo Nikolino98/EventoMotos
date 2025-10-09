@@ -135,60 +135,105 @@ export const GuestTable: React.FC<GuestTableProps> = ({
       : data;
 
   // Orden específico de los campos
-  const FIELD_ORDER = [
-    "DNI",
-    "Apellido y Nombre",
-    "Pais",
-    "Provincia",
-    "Ciudad de donde nos visitas",
-    "Teléfono",
-    "Dirección de correo electrónico",
-    "Grupo sanguíneo",
-    "Moto en la que venís",
-    "Tenés carnet Vigente?",
-    "Tenés Seguro vigente?",
-    "Vas a realizar las rodadas",
-    "Sos alérgico a algo?",
-    "A que sos alérgico?",
-    "Tenés alguna restricción alimentaria?",
-    "Cena show día sábado 11 (no incluye bebida)",
-    "Pagó?",
-    "Contacto de Emergencia",
-    "Venís acompañado?",
-    "DNI Acompañante",
-    "Apellido y Nombre del acompañante"
-  ];
+const FIELD_ORDER = [
+  "DNI",
+  "Apellido y Nombre",
+  "Pais",
+  "Provincia",
+  "Ciudad de donde nos visitas",
+  "Teléfono",
+  "Dirección de correo electrónico",
+  "Grupo sanguíneo",
+  "Moto en la que venís",
+  "Tenés carnet Vigente?",
+  "Tenés Seguro vigente?",
+  "Vas a realizar las rodadas",
+  "Sos alérgico a algo?",
+  "A que sos alérgico?",
+  "Tenés alguna restricción alimentaria?",
+  "Cena show día sábado 11 (no incluye bebida)",
+  "Pagó?",
+  "Contacto de Emergencia",
+  "Venís acompañado?",
+  "DNI Acompañante",
+  "Apellido y Nombre del acompañante"
+];
+
+// Orden específico para la exportación a XLSX
+const EXPORT_FIELD_ORDER = [
+  "Apellido y Nombre",
+  "DNI",
+  "Grupo sanguíneo",
+  "Teléfono",
+  "Dirección de correo electrónico",
+  "Venís acompañado?",
+  "Apellido y Nombre del acompañante",
+  "DNI Acompañante",
+  "Contacto de Emergencia",
+  "Tenés carnet Vigente?",
+  "Tenés Seguro vigente?",
+  "Cena show día sábado 11 (no incluye bebida)",
+  "Tenés alguna restricción alimentaria?",
+  "Moto en la que venís",
+  "Ciudad de donde nos visitas",
+  "Provincia",
+  "Pais",
+  "Sos alérgico a algo?",
+  "A que sos alérgico?",
+  "Vas a realizar las rodadas",
+  "Pagó?",
+  "Número de Pulsera",
+  "Número de Pulsera Acompañante"
+];
 
   // Función para exportar datos a XLSX
   const handleExportToXLSX = () => {
-    // Usar los datos actuales para la exportación
-    const dataToExport = currentData.map(row => {
-      // Crear un objeto ordenado con los campos en el orden específico
-      const orderedRow = {};
-      
-      // Primero agregamos los campos en el orden especificado
-      EXPORT_FIELD_ORDER.forEach(field => {
-        if (field === "Número de Pulsera") {
-          orderedRow[field] = row._bracelet_number || "";
-        } else if (field === "Número de Pulsera Acompañante") {
-          orderedRow[field] = row._companion_bracelet_number || "";
-        } else {
-          orderedRow[field] = row[field] || "";
-        }
-      });
+    try {
+      if (!currentData || currentData.length === 0) {
+        toast({
+          title: "Error al exportar",
+          description: "No hay datos para exportar.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      return orderedRow;
-    });
-    
-    // Exportar con nombre descriptivo y fecha
-    const today = new Date();
-    const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
-    exportToXLSX(dataToExport, `invitados-moto-event-${dateStr}`);
-    
-    toast({
-      title: "Exportación exitosa",
-      description: "Los datos han sido exportados en formato XLSX.",
-    });
+      // Usar los datos actuales para la exportación
+      const dataToExport = currentData.map(row => {
+        // Crear un objeto ordenado con los campos en el orden específico
+        const orderedRow = {};
+        
+        // Primero agregamos los campos en el orden especificado
+        EXPORT_FIELD_ORDER.forEach(field => {
+          if (field === "Número de Pulsera") {
+            orderedRow[field] = row._bracelet_number || "";
+          } else if (field === "Número de Pulsera Acompañante") {
+            orderedRow[field] = row._companion_bracelet_number || "";
+          } else {
+            orderedRow[field] = row[field] || "";
+          }
+        });
+
+        return orderedRow;
+      });
+      
+      // Exportar con nombre descriptivo y fecha
+      const today = new Date();
+      const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
+      exportToXLSX(dataToExport, `invitados-moto-event-${dateStr}`);
+      
+      toast({
+        title: "Exportación exitosa",
+        description: "Los datos han sido exportados en formato XLSX.",
+      });
+    } catch (error) {
+      console.error('Error en handleExportToXLSX:', error);
+      toast({
+        title: "Error al exportar",
+        description: "Ocurrió un error al exportar los datos. Por favor, inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    }
   };
 
   // getGuestId debe estar antes de cualquier uso
