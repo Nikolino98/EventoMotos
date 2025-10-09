@@ -11,6 +11,13 @@ import {
   Trash2,
   FileDown,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -127,18 +134,52 @@ export const GuestTable: React.FC<GuestTableProps> = ({
         }))
       : data;
 
+  // Orden específico de los campos
+  const FIELD_ORDER = [
+    "DNI",
+    "Apellido y Nombre",
+    "Pais",
+    "Provincia",
+    "Ciudad de donde nos visitas",
+    "Teléfono",
+    "Dirección de correo electrónico",
+    "Grupo sanguíneo",
+    "Moto en la que venís",
+    "Tenés carnet Vigente?",
+    "Tenés Seguro vigente?",
+    "Vas a realizar las rodadas",
+    "Sos alérgico a algo?",
+    "A que sos alérgico?",
+    "Tenés alguna restricción alimentaria?",
+    "Cena show día sábado 11 (no incluye bebida)",
+    "Pagó?",
+    "Contacto de Emergencia",
+    "Venís acompañado?",
+    "DNI Acompañante",
+    "Apellido y Nombre del acompañante",
+    "Número de Pulsera",
+    "Número de Pulsera Acompañante"
+  ];
+
   // Función para exportar datos a XLSX
   const handleExportToXLSX = () => {
     // Usar los datos actuales para la exportación
     const dataToExport = currentData.map(row => {
-      // Crear una copia limpia sin los campos internos que empiezan con _
-      const cleanRow = { ...row };
-      Object.keys(cleanRow).forEach(key => {
-        if (key.startsWith('_')) {
-          delete cleanRow[key];
+      // Crear un objeto ordenado con los campos en el orden específico
+      const orderedRow = {};
+      
+      // Primero agregamos los campos en el orden especificado
+      EXPORT_FIELD_ORDER.forEach(field => {
+        if (field === "Número de Pulsera") {
+          orderedRow[field] = row._bracelet_number || "";
+        } else if (field === "Número de Pulsera Acompañante") {
+          orderedRow[field] = row._companion_bracelet_number || "";
+        } else {
+          orderedRow[field] = row[field] || "";
         }
       });
-      return cleanRow;
+
+      return orderedRow;
     });
     
     // Exportar con nombre descriptivo y fecha
@@ -191,11 +232,57 @@ export const GuestTable: React.FC<GuestTableProps> = ({
   // Detecta si el invitado viene acompañado
   const hasCompanion = (guestData: any) => {
     const val =
+      guestData["Venís acompañado?"] ||
       guestData["Venís acompañado"] ||
       guestData["venis acompañado"] ||
       guestData["Venís Acompañado"];
-    const normalizedVal = val?.toString().toLowerCase();
-    return normalizedVal === "sí" || normalizedVal === "si";
+    const normalizedVal = val?.toString().toLowerCase().trim();
+    return ["si", "sí", "true", "yes", "1"].includes(normalizedVal);
+  };
+
+  // Función para manejar el clic en un invitado
+  const handleGuestClick = (guestId: string, row: any) => {
+    // Normalizar los valores booleanos a "Si"/"No"
+    const normalizedData = { ...row };
+    const booleanFields = [
+      "Sos alérgico a algo?",
+      "Tenés carnet Vigente?",
+      "Tenés Seguro vigente?",
+      "Vas a realizar las rodadas",
+      "Tenés alguna restricción alimentaria?",
+      "Cena show día sábado 11 (no incluye bebida)"
+    ];
+
+    // Verificar si hay información del acompañante
+    const hasCompanionInfo = 
+      (row["Apellido y Nombre del acompañante"]?.toString().trim() || "").length > 0 ||
+      (row["DNI Acompañante"]?.toString().trim() || "").length > 0;
+
+    // Establecer "Venís acompañado?" basado en la información del acompañante
+    normalizedData["Venís acompañado?"] = hasCompanionInfo ? "Si" : "No";
+
+    // Normalizar otros campos booleanos
+    booleanFields.forEach(field => {
+      const value = row[field];
+      if (value !== undefined && value !== null) {
+        const strValue = value.toString().toLowerCase().trim();
+        normalizedData[field] = ["si", "sí", "true", "yes", "1"].includes(strValue) ? "Si" : "No";
+      }
+    });
+
+    // Establecer el estado del invitado actual con los datos normalizados
+    setCurrentGuest({
+      id: guestId,
+      data: normalizedData,
+      hasCompanion: hasCompanionInfo
+    });
+
+    // Establecer los números de pulsera
+    setBraceletNumber(row._bracelet_number || "");
+    setCompanionBraceletNumber(row._companion_bracelet_number || "");
+    
+    // Abrir el modal
+    setInfoModalOpen(true);
   };
 
   // Handler para eliminar invitado
@@ -465,6 +552,17 @@ export const GuestTable: React.FC<GuestTableProps> = ({
             const isConfirmed = confirmedGuests.has(guestId);
             const guestName = row["Apellido y Nombre"] || guestId;
 
+            const orderedData = {};
+            FIELD_ORDER.forEach(field => {
+              if (field === "Número de Pulsera") {
+                orderedData[field] = row._bracelet_number || "";
+              } else if (field === "Número de Pulsera Acompañante") {
+                orderedData[field] = row._companion_bracelet_number || "";
+              } else {
+                orderedData[field] = row[field] || "";
+              }
+            });
+
             return (
               <div
                 key={index}
@@ -473,22 +571,12 @@ export const GuestTable: React.FC<GuestTableProps> = ({
                     ? "bg-success/10 border-success/30 border-l-4 border-l-green-500"
                     : "bg-background/50 border-gray-600 border-l-4 border-l-gray-500"
                 } ${index % 2 === 0 ? "bg-gray-900/40" : "bg-gray-950/20"} shadow-md my-3`}
-                onClick={() => {
-                  // Abrir directamente el modal para asignar pulseras
-                  setCurrentGuest({
-                    id: guestId,
-                    data: row,
-                    hasCompanion: hasCompanion(row),
-                  });
-                  setBraceletNumber(row._bracelet_number || "");
-                  setCompanionBraceletNumber(row._companion_bracelet_number || "");
-                  setInfoModalOpen(true);
-                }}
+                onClick={() => handleGuestClick(guestId, row)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-white text-lg">
-                      {guestName}
+                      {orderedData["Apellido y Nombre"]}
                     </span>
                     <Badge
                       variant={isConfirmed ? "default" : "secondary"}
@@ -551,10 +639,19 @@ export const GuestTable: React.FC<GuestTableProps> = ({
                     </Button>
                   </div>
                 </div>
-                <div className="mt-2 text-sm text-gray-300">
-                  <span>Teléfono: {row["Teléfono"] || "-"}</span>
-                  {row["Venís acompañado"]?.toString().toLowerCase() ===
-                    "si" && <span className="ml-4">• Viene acompañado</span>}
+                <div className="mt-2 text-sm text-gray-300 grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <span>DNI: {orderedData["DNI"] || "-"}</span>
+                  <span>Teléfono: {orderedData["Teléfono"] || "-"}</span>
+                  <span>País: {orderedData["Pais"] || "-"}</span>
+                  <span>Provincia: {orderedData["Provincia"] || "-"}</span>
+                  <span>Ciudad: {orderedData["Ciudad de donde nos visitas"] || "-"}</span>
+                  <span>Moto: {orderedData["Moto en la que venís"] || "-"}</span>
+                  {orderedData["Venís acompañado"]?.toString().toLowerCase() === "si" && (
+                    <>
+                      <span>DNI Acompañante: {orderedData["DNI Acompañante"] || "-"}</span>
+                      <span>Nombre Acompañante: {orderedData["Apellido y Nombre del acompañante"] || "-"}</span>
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -578,81 +675,112 @@ export const GuestTable: React.FC<GuestTableProps> = ({
             <div className="space-y-6">
               {/* Información editable del invitado */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
-                {Object.entries(currentGuest.data).map(
-                  ([key, value]: [string, any]) => {
-                    if (
-                      key.startsWith("_") ||
-                      key === "guest_id" ||
-                      key === "confirmed" ||
-                      key === "confirmed_at"
-                    )
-                      return null;
-                      
-                    // No mostrar campos de acompañante si "Venís acompañado" es "No"
-                    const isCompanionField = key === "DNI Acompañante" || 
-                                            key === "Apellido y Nombre del acompañante";
+                {FIELD_ORDER.map((field) => {
+                  const isPositiveResponse = (value?: string | boolean | null) => {
+                    if (!value) return false;
+                    const strValue = value.toString().toLowerCase().trim();
+                    return ["si", "sí", "true", "yes", "1"].includes(strValue);
+                  };
+
+                  // No mostrar campos de acompañante si "Venís acompañado?" es "No"
+                  if (
+                    (field === "DNI Acompañante" ||
+                    field === "Apellido y Nombre del acompañante" ||
+                    field === "Número de Pulsera Acompañante") &&
+                    !isPositiveResponse(currentGuest.data["Venís acompañado?"])
+                  ) {
+                    return null;
+                  }
+
+                  // No mostrar campo de alergias si no es alérgico
+                  if (
+                    field === "A que sos alérgico?" &&
+                    !isPositiveResponse(currentGuest.data["Sos alérgico a algo?"])
+                  ) {
+                    return null;
+                  }
+
+                  // Si es un campo de selección Si/No
+                  if (
+                    field === "Sos alérgico a algo?" ||
+                    field === "Tenés carnet Vigente?" ||
+                    field === "Tenés Seguro vigente?" ||
+                    field === "Vas a realizar las rodadas" ||
+                    field === "Venís acompañado?" ||
+                    field === "Tenés alguna restricción alimentaria?" ||
+                    field === "Cena show día sábado 11 (no incluye bebida)"
+                  ) {
+                    // Convertir cualquier valor positivo a "Si" y el resto a "No"
+                    const currentValue = isPositiveResponse(currentGuest.data[field]) ? "Si" : "No";
                     
-                    if (isCompanionField && 
-                        (!currentGuest.data["Venís acompañado"] || 
-                         currentGuest.data["Venís acompañado"].toString().toLowerCase() === "no")) {
-                      return null;
-                    }
-                    
-                    // Si es un campo booleano (Venís acompañado o Sos alérgico), usar un select para facilitar la edición
-                    if (key.toLowerCase().includes("venís acompañado") || key.toLowerCase().includes("sos alérgico")) {
-                      return (
-                        <div key={key} className="space-y-1">
-                          <Label className="text-sm text-gray-400">{key}</Label>
-                          <select
-                            className="font-medium w-full bg-background text-white border rounded px-2 py-1"
-                            value={value?.toString().toLowerCase() === "sí" || value?.toString().toLowerCase() === "si" ? "Sí" : "No"}
-                            onChange={(e) => {
-                              setCurrentGuest((prev: any) => ({
-                                ...prev,
-                                data: {
-                                  ...prev.data,
-                                  [key]: e.target.value,
-                                },
-                                // Actualizar hasCompanion solo si es el campo de acompañado
-                                ...(key.toLowerCase().includes("acompañado") ? {
-                                  hasCompanion: e.target.value === "Sí",
-                                } : {}),
-                              }));
-                            }}
-                          >
-                            <option value="Sí">Sí</option>
-                            <option value="No">No</option>
-                          </select>
-                        </div>
-                      );
-                    }
                     return (
-                      <div key={key} className="space-y-1">
-                        <Label className="text-sm text-gray-400">{key}</Label>
-                        <Input
-                          className="font-medium"
-                          value={value?.toString() || "-"}
-                          onChange={(e) => {
-                            // Aseguramos que el valor se guarde y muestre correctamente, incluyendo acentos y ñ
-                            const newValue = e.target.value.normalize("NFC");
+                      <div key={field} className="space-y-1">
+                        <Label className="text-sm text-gray-400">{field}</Label>
+                        <Select
+                          value={currentValue}
+                          onValueChange={(value) => {
                             setCurrentGuest((prev: any) => ({
                               ...prev,
                               data: {
                                 ...prev.data,
-                                [key]: newValue,
+                                [field]: value,
                               },
+                              hasCompanion: field === "Venís acompañado?" ? value === "Si" : prev.hasCompanion,
                             }));
                           }}
-                          type="text"
-                          inputMode="text"
-                          autoComplete="on"
-                          spellCheck={true}
-                          lang="es"
-                        />
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={`Selecciona ${field.toLowerCase()}`} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Si">Si</SelectItem>
+                            <SelectItem value="No">No</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     );
                   }
-                )}
+
+                  // Para el resto de campos, usar Input
+                  return (
+                    <div key={field} className="space-y-1">
+                      <Label className="text-sm text-gray-400">{field}</Label>
+                      <Input
+                        className="font-medium"
+                        value={currentGuest.data[field]?.toString() || ""}
+                        onChange={(e) => {
+                          const newValue = e.target.value.normalize("NFC");
+                          setCurrentGuest((prev: any) => {
+                            const newData = {
+                              ...prev.data,
+                              [field]: newValue,
+                            };
+
+                            // Si se está editando un campo de acompañante, actualizar "Venís acompañado?"
+                            if (field === "Apellido y Nombre del acompañante" || field === "DNI Acompañante") {
+                              const hasCompanionInfo = 
+                                (field === "Apellido y Nombre del acompañante" ? newValue : newData["Apellido y Nombre del acompañante"])?.toString().trim().length > 0 ||
+                                (field === "DNI Acompañante" ? newValue : newData["DNI Acompañante"])?.toString().trim().length > 0;
+                              
+                              newData["Venís acompañado?"] = hasCompanionInfo ? "Si" : "No";
+                            }
+
+                            return {
+                              ...prev,
+                              data: newData,
+                              hasCompanion: newData["Venís acompañado?"] === "Si"
+                            };
+                          });
+                        }}
+                        type="text"
+                        inputMode="text"
+                        autoComplete="on"
+                        spellCheck={true}
+                        lang="es"
+                      />
+                    </div>
+                  );
+                })}
               </div>
               {/* Sección de asignación de pulseras */}
               <div className="space-y-4">
@@ -671,9 +799,7 @@ export const GuestTable: React.FC<GuestTableProps> = ({
                       onChange={(e) => setBraceletNumber(e.target.value)}
                     />
                   </div>
-                  {currentGuest.hasCompanion && 
-                   currentGuest.data["Venís acompañado"] && 
-                   currentGuest.data["Venís acompañado"].toString().toLowerCase() !== "no" && (
+                  {currentGuest.data["Venís acompañado?"] === "Si" && (
                     <div className="space-y-2">
                       <Label htmlFor="companion-bracelet-modal">
                         Número de Pulsera Acompañante *

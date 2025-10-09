@@ -29,17 +29,42 @@ export const CreateAttendeeModal = ({
   usedBraceletNumbers,
   columnHeaders,
 }: CreateAttendeeModalProps) => {
+  // Orden específico de los campos
+  const FIELD_ORDER = [
+    "DNI",
+    "Apellido y Nombre",
+    "Pais",
+    "Provincia",
+    "Ciudad de donde nos visitas",
+    "Teléfono",
+    "Dirección de correo electrónico",
+    "Grupo sanguíneo",
+    "Moto en la que venís",
+    "Tenés carnet Vigente?",
+    "Tenés Seguro vigente?",
+    "Vas a realizar las rodadas",
+    "Sos alérgico a algo?",
+    "A que sos alérgico?",
+    "Tenés alguna restricción alimentaria?",
+    "Cena show día sábado 11 (no incluye bebida)",
+    "Pagó?",
+    "Contacto de Emergencia",
+    "Venís acompañado?",
+    "DNI Acompañante",
+    "Apellido y Nombre del acompañante",
+    "Número de Pulsera",
+    "Número de Pulsera Acompañante"
+  ];
+
   const [newAttendee, setNewAttendee] = useState<Attendee>(() => {
     const attendee: Attendee = {
       id: uuidv4(),
       isConfirmed: false,
     };
     
-    // Inicializar campos basados en las columnas existentes
-    columnHeaders.forEach(header => {
-      if (header !== 'id' && header !== 'isConfirmed') {
-        attendee[header] = '';
-      }
+    // Inicializar campos en el orden específico
+    FIELD_ORDER.forEach(field => {
+      attendee[field] = '';
     });
     
     return attendee;
@@ -144,33 +169,61 @@ export const CreateAttendeeModal = ({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {Object.keys(newAttendee)
-            .filter((key) => {
-              // No mostrar ID, isConfirmed ni Marca Temporal
-              if (key === "id" || key === "isConfirmed" || key.toLowerCase().includes("marca temporal")) {
-                return false;
-              }
-              
-              // No mostrar companionBraceletNumber si no viene acompañado
-              if (key === "companionBraceletNumber" && !hasCompanion()) {
-                return false;
-              }
-              
-              return true;
-            })
-            .map((key) => (
-              <div key={key} className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor={key} className="text-right font-medium text-sm" style={{ color: '#F6762C' }}>
-                  {getFieldLabel(key)}
+          {FIELD_ORDER.map((field) => {
+            if (
+              field === "A que sos alérgico?" &&
+              newAttendee["Sos alérgico a algo?"] === "No"
+            )
+              return null;
+
+            if (
+              (field === "DNI Acompañante" ||
+              field === "Apellido y Nombre del acompañante" ||
+              field === "Número de Pulsera Acompañante") &&
+              newAttendee["Venís acompañado?"] !== "Si"
+            )
+              return null;
+
+            return (
+              <div key={field} className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor={field} className="text-right font-medium text-sm" style={{ color: '#F6762C' }}>
+                  {getFieldLabel(field)}
                 </Label>
-                <Input
-                  id={key}
-                  value={newAttendee[key] ?? ""}
-                  onChange={(e) => handleFieldChange(key, e.target.value)}
-                  className="col-span-3"
-                />
+                {field === "Sos alérgico a algo?" ||
+                field === "Tenés carnet Vigente?" ||
+                field === "Tenés Seguro vigente?" ||
+                field === "Vas a realizar las rodadas" ||
+                field === "Venís acompañado?" ||
+                field === "Tenés alguna restricción alimentaria?" ||
+                field === "Cena show día sábado 11 (no incluye bebida)" ? (
+                  <Select
+                    value={newAttendee[field]}
+                    onValueChange={(value) =>
+                      handleFieldChange(field, value)
+                    }
+                    className="col-span-3"
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={`Selecciona ${field.toLowerCase()}`}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Si">Si</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id={field}
+                    value={newAttendee[field] || ''}
+                    onChange={(e) => handleFieldChange(field, e.target.value)}
+                    className="col-span-3"
+                  />
+                )}
               </div>
-            ))}
+            );
+          })}
         </div>
 
         <DialogFooter>
