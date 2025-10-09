@@ -156,9 +156,7 @@ export const GuestTable: React.FC<GuestTableProps> = ({
     "Contacto de Emergencia",
     "Venís acompañado?",
     "DNI Acompañante",
-    "Apellido y Nombre del acompañante",
-    "Número de Pulsera",
-    "Número de Pulsera Acompañante"
+    "Apellido y Nombre del acompañante"
   ];
 
   // Función para exportar datos a XLSX
