@@ -724,8 +724,7 @@ const EXPORT_FIELD_ORDER = [
                     field === "Vas a realizar las rodadas" ||
                     field === "Venís acompañado?" ||
                     field === "Tenés alguna restricción alimentaria?" ||
-                    field === "Cena show día sábado 11 (no incluye bebida)" ||
-                    field === "Pagó?"
+                    field === "Cena show día sábado 11 (no incluye bebida)"
                   ) {
                     // Convertir cualquier valor positivo a "Si" y el resto a "No"
                     const currentValue = isPositiveResponse(currentGuest.data[field]) ? "Si" : "No";
