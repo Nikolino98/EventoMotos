@@ -13,6 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CreateAttendeeModalProps {
   isOpen: boolean;
@@ -33,6 +40,7 @@ export const CreateAttendeeModal = ({
   const FIELD_ORDER = [
     "DNI",
     "Apellido y Nombre",
+    "braceletNumber",
     "Pais",
     "Provincia",
     "Ciudad de donde nos visitas",
@@ -52,8 +60,7 @@ export const CreateAttendeeModal = ({
     "Venís acompañado?",
     "DNI Acompañante",
     "Apellido y Nombre del acompañante",
-    "Número de Pulsera",
-    "Número de Pulsera Acompañante"
+    "companionBraceletNumber"
   ];
 
   const [newAttendee, setNewAttendee] = useState<Attendee>(() => {
@@ -90,34 +97,15 @@ export const CreateAttendeeModal = ({
       return false;
     }
 
-    if (usedBraceletNumbers.has(number)) {
-      toast({
-        variant: "destructive",
-        title: "Número en uso",
-        description: "Este número de pulsera ya está asignado a otro asistente.",
-      });
-      return false;
-    }
-
     return true;
   };
 
   const hasCompanion = () => {
-    const companionFields = Object.keys(newAttendee).filter(key =>
-      key.toLowerCase().includes("acompañ")
-    );
-    
-    for (const field of companionFields) {
-      const value = String(newAttendee[field]).toLowerCase();
-      if (value === "si" || value === "sí" || value === "yes") {
-        return true;
-      }
-    }
-    return false;
+    return newAttendee["Venís acompañado?"] === "Si";
   };
 
   const handleSave = () => {
-    if (newAttendee.braceletNumber && !validateBraceletNumber(newAttendee.braceletNumber)) {
+    if (!validateBraceletNumber(newAttendee.braceletNumber)) {
       return;
     }
 
@@ -141,12 +129,13 @@ export const CreateAttendeeModal = ({
     }
     
     // Cambiar nombres específicos
-    if (key === "braceletNumber") {
-      return "NUMERO DE PULSERA";
-    }
-    
-    if (key === "companionBraceletNumber") {
-      return "PULSERA ACOMPAÑANTE";
+    const fieldLabels = {
+      braceletNumber: "NÚMERO DE PULSERA (OPCIONAL)",
+      companionBraceletNumber: "NÚMERO DE PULSERA ACOMPAÑANTE (OPCIONAL)",
+    };
+
+    if (fieldLabels[key]) {
+      return fieldLabels[key];
     }
     
     // Convertir a mayúsculas
@@ -164,7 +153,7 @@ export const CreateAttendeeModal = ({
         <DialogHeader>
           <DialogTitle>Crear Nuevo Invitado</DialogTitle>
           <DialogDescription>
-            Ingresa la información del nuevo invitado y asigna números de pulsera únicos.
+            Ingresa la información del nuevo invitado. El número de pulsera es opcional y puede ser asignado más tarde.
           </DialogDescription>
         </DialogHeader>
 
@@ -179,8 +168,8 @@ export const CreateAttendeeModal = ({
             if (
               (field === "DNI Acompañante" ||
               field === "Apellido y Nombre del acompañante" ||
-              field === "Número de Pulsera Acompañante") &&
-              newAttendee["Venís acompañado?"] !== "Si"
+              field === "companionBraceletNumber") &&
+              !hasCompanion()
             )
               return null;
 
@@ -219,6 +208,14 @@ export const CreateAttendeeModal = ({
                     value={newAttendee[field] || ''}
                     onChange={(e) => handleFieldChange(field, e.target.value)}
                     className="col-span-3"
+                    type={field === "braceletNumber" || field === "companionBraceletNumber" ? "number" : "text"}
+                    placeholder={
+                      field === "braceletNumber" 
+                        ? "Ingrese el número de pulsera (opcional)" 
+                        : field === "companionBraceletNumber"
+                        ? "Ingrese el número de pulsera del acompañante (opcional)"
+                        : ""
+                    }
                   />
                 )}
               </div>
