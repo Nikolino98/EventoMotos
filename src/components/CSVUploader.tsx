@@ -107,7 +107,13 @@ export const CSVUploader: React.FC<CSVUploaderProps> = ({ onDataLoad }) => {
           .map(row => {
             const obj: any = {};
             headers.forEach((header, index) => {
-              obj[header] = row[index] || '';
+              if (header === "Pagó?") {
+                // Convertir el valor a número, si está vacío o no es un número válido, usar 0
+                const value = row[index];
+                obj[header] = value ? Number(value) || 0 : 0;
+              } else {
+                obj[header] = row[index] || '';
+              }
             });
             return obj;
           });
@@ -166,10 +172,19 @@ export const CSVUploader: React.FC<CSVUploaderProps> = ({ onDataLoad }) => {
           return;
         }
 
-        // Filter out completely empty rows
-        const validData = results.data.filter((row: any) => {
-          return Object.values(row).some(value => value !== null && value !== undefined && value !== '');
-        });
+        // Filter out completely empty rows and process payment field
+        const validData = results.data
+          .filter((row: any) => {
+            return Object.values(row).some(value => value !== null && value !== undefined && value !== '');
+          })
+          .map((row: any) => {
+            const processedRow = { ...row };
+            if ("Pagó?" in processedRow) {
+              // Convertir el valor a número, si está vacío o no es un número válido, usar 0
+              processedRow["Pagó?"] = processedRow["Pagó?"] ? Number(processedRow["Pagó?"]) || 0 : 0;
+            }
+            return processedRow;
+          });
 
         if (validData.length === 0) {
           setError('No se encontraron filas de datos válidas');
