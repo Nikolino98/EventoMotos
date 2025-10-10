@@ -60,7 +60,7 @@ export const CreateAttendeeModal = ({
     "DNI Acompañante",
     "Apellido y Nombre del acompañante",
     "braceletNumber",
-    "companionBraceletNumber"
+    "companionBraceletNumber",
   ];
 
   const [newAttendee, setNewAttendee] = useState<Attendee>(() => {
@@ -68,12 +68,12 @@ export const CreateAttendeeModal = ({
       id: uuidv4(),
       isConfirmed: false,
     };
-    
+
     // Inicializar campos en el orden específico
-    FIELD_ORDER.forEach(field => {
-      attendee[field] = '';
+    FIELD_ORDER.forEach((field) => {
+      attendee[field] = "";
     });
-    
+
     return attendee;
   });
 
@@ -81,18 +81,22 @@ export const CreateAttendeeModal = ({
     setNewAttendee((prev) => ({ ...prev, [key]: value }));
   };
 
-  const validateBraceletNumber = (number: string, isCompanion: boolean = false): boolean => {
+  const validateBraceletNumber = (
+    number: string,
+    isCompanion: boolean = false
+  ): boolean => {
     if (!number) return true;
-    
-    const otherNumber = isCompanion 
-      ? newAttendee.braceletNumber 
+
+    const otherNumber = isCompanion
+      ? newAttendee.braceletNumber
       : newAttendee.companionBraceletNumber;
-    
+
     if (number === otherNumber) {
       toast({
         variant: "destructive",
         title: "Número duplicado",
-        description: "Las pulseras del invitado y acompañante no pueden ser iguales.",
+        description:
+          "Las pulseras del invitado y acompañante no pueden ser iguales.",
       });
       return false;
     }
@@ -109,8 +113,11 @@ export const CreateAttendeeModal = ({
       return;
     }
 
-    if (hasCompanion() && newAttendee.companionBraceletNumber && 
-        !validateBraceletNumber(newAttendee.companionBraceletNumber, true)) {
+    if (
+      hasCompanion() &&
+      newAttendee.companionBraceletNumber &&
+      !validateBraceletNumber(newAttendee.companionBraceletNumber, true)
+    ) {
       return;
     }
 
@@ -124,10 +131,13 @@ export const CreateAttendeeModal = ({
 
   const getFieldLabel = (key: string): string => {
     // Si es "Marca Temporal", retornamos vacío para que no se muestre
-    if (key.toLowerCase().includes("marca") && key.toLowerCase().includes("temporal")) {
+    if (
+      key.toLowerCase().includes("marca") &&
+      key.toLowerCase().includes("temporal")
+    ) {
       return "";
     }
-    
+
     // Cambiar nombres específicos
     const fieldLabels = {
       braceletNumber: "NÚMERO DE PULSERA (OPCIONAL)",
@@ -137,7 +147,7 @@ export const CreateAttendeeModal = ({
     if (fieldLabels[key]) {
       return fieldLabels[key];
     }
-    
+
     // Convertir a mayúsculas
     return key
       .split(/(?=[A-Z])/)
@@ -153,7 +163,8 @@ export const CreateAttendeeModal = ({
         <DialogHeader>
           <DialogTitle>Crear Nuevo Invitado</DialogTitle>
           <DialogDescription>
-            Ingresa la información del nuevo invitado. El número de pulsera es opcional y puede ser asignado más tarde.
+            Ingresa la información del nuevo invitado. El número de pulsera es
+            opcional y puede ser asignado más tarde.
           </DialogDescription>
         </DialogHeader>
 
@@ -165,17 +176,21 @@ export const CreateAttendeeModal = ({
             </h3>
             <div className="space-y-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="bracelet-modal" className="text-right font-medium text-sm" style={{ color: '#F6762C' }}>
-                  NÚMERO DE PULSERA 
+                <Label
+                  htmlFor="bracelet-modal"
+                  className="text-right font-medium text-sm"
+                  style={{ color: "#F6762C" }}
+                >
+                  NÚMERO DE PULSERA
                 </Label>
                 <Input
                   id="bracelet-modal"
                   placeholder="Ej: 001"
-                  value={newAttendee.braceletNumber || ''}
+                  value={newAttendee.braceletNumber || ""}
                   onChange={(e) => {
                     const value = e.target.value;
                     if (!validateBraceletNumber(value)) return;
-                    handleFieldChange('braceletNumber', value);
+                    handleFieldChange("braceletNumber", value);
                   }}
                   type="number"
                   className="col-span-3"
@@ -183,17 +198,21 @@ export const CreateAttendeeModal = ({
               </div>
               {hasCompanion() && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="companion-bracelet-modal" className="text-right font-medium text-sm" style={{ color: '#F6762C' }}>
+                  <Label
+                    htmlFor="companion-bracelet-modal"
+                    className="text-right font-medium text-sm"
+                    style={{ color: "#F6762C" }}
+                  >
                     NÚMERO DE PULSERA ACOMPAÑANTE (OPCIONAL)
                   </Label>
                   <Input
                     id="companion-bracelet-modal"
                     placeholder="Ej: 002"
-                    value={newAttendee.companionBraceletNumber || ''}
+                    value={newAttendee.companionBraceletNumber || ""}
                     onChange={(e) => {
                       const value = e.target.value;
                       if (!validateBraceletNumber(value, true)) return;
-                      handleFieldChange('companionBraceletNumber', value);
+                      handleFieldChange("companionBraceletNumber", value);
                     }}
                     type="number"
                     className="col-span-3"
@@ -204,7 +223,10 @@ export const CreateAttendeeModal = ({
           </div>
 
           {/* Campos del formulario */}
-          {FIELD_ORDER.filter(field => field !== 'braceletNumber' && field !== 'companionBraceletNumber').map((field) => {
+          {FIELD_ORDER.filter(
+            (field) =>
+              field !== "braceletNumber" && field !== "companionBraceletNumber"
+          ).map((field) => {
             if (
               field === "A que sos alérgico?" &&
               newAttendee["Sos alérgico a algo?"] === "No"
@@ -213,14 +235,18 @@ export const CreateAttendeeModal = ({
 
             if (
               (field === "DNI Acompañante" ||
-              field === "Apellido y Nombre del acompañante") &&
+                field === "Apellido y Nombre del acompañante") &&
               !hasCompanion()
             )
               return null;
 
             return (
               <div key={field} className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor={field} className="text-right font-medium text-sm" style={{ color: '#F6762C' }}>
+                <Label
+                  htmlFor={field}
+                  className="text-right font-medium text-sm"
+                  style={{ color: "#F6762C" }}
+                >
                   {getFieldLabel(field)}
                 </Label>
                 {field === "Sos alérgico a algo?" ||
@@ -233,9 +259,7 @@ export const CreateAttendeeModal = ({
                 field === "Pagó?" ? (
                   <Select
                     value={newAttendee[field]}
-                    onValueChange={(value) =>
-                      handleFieldChange(field, value)
-                    }
+                    onValueChange={(value) => handleFieldChange(field, value)}
                     className="col-span-3"
                   >
                     <SelectTrigger>
@@ -248,10 +272,21 @@ export const CreateAttendeeModal = ({
                       <SelectItem value="No">No</SelectItem>
                     </SelectContent>
                   </Select>
+                ) : field === "Pagó?" ? (
+                  <Input
+                    id={field}
+                    value={newAttendee[field] || ""}
+                    onChange={(e) => handleFieldChange(field, e.target.value)}
+                    className="col-span-3"
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="Ingrese el monto pagado"
+                  />
                 ) : (
                   <Input
                     id={field}
-                    value={newAttendee[field] || ''}
+                    value={newAttendee[field] || ""}
                     onChange={(e) => handleFieldChange(field, e.target.value)}
                     className="col-span-3"
                     type="text"
