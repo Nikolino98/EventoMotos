@@ -413,7 +413,7 @@ const EXPORT_FIELD_ORDER = [
   const handleSaveBracelets = async () => {
     // Usar currentGuest si está disponible, de lo contrario usar selectedGuest
     const guest = currentGuest || selectedGuest;
-
+  
     if (!guest) {
       toast({
         title: "Error",
@@ -422,116 +422,88 @@ const EXPORT_FIELD_ORDER = [
       });
       return;
     }
-
-    // Validación: obligatorio ingresar número de pulsera principal
-    if (!braceletNumber.trim()) {
-      toast({
-        title: "Error",
-        description: "Debes ingresar el número de pulsera principal.",
-        variant: "destructive",
+  
+    // Solo validar si se ingresó un número de pulsera
+    if (braceletNumber.trim()) {
+      // Validación: los números de pulsera deben ser únicos en toda la lista
+      const allBracelets = new Set<string>();
+      supabaseGuests.forEach((g) => {
+        if (g.bracelet_number) allBracelets.add(g.bracelet_number.trim());
+        if (g.companion_bracelet_number)
+          allBracelets.add(g.companion_bracelet_number.trim());
       });
-      return;
+  
+      // Si estamos editando, quitar los actuales del invitado seleccionado
+      const currentGuestData = supabaseGuests.find(
+        (g) => g.guest_id === guest.id
+      );
+      if (currentGuestData) {
+        if (currentGuestData.bracelet_number)
+          allBracelets.delete(currentGuestData.bracelet_number.trim());
+        if (currentGuestData.companion_bracelet_number)
+          allBracelets.delete(currentGuestData.companion_bracelet_number.trim());
+      }
+  
+      if (allBracelets.has(braceletNumber.trim())) {
+        toast({
+          title: "Error",
+          description:
+            "El número de pulsera principal ya está asignado a otro invitado.",
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      // Si hay número de pulsera de acompañante, validar que sea único
+      if (companionBraceletNumber.trim()) {
+        if (allBracelets.has(companionBraceletNumber.trim())) {
+          toast({
+            title: "Error",
+            description:
+              "El número de pulsera del acompañante ya está asignado a otro invitado.",
+            variant: "destructive",
+          });
+          return;
+        }
+  
+        // Además, no pueden ser iguales entre sí
+        if (braceletNumber.trim() === companionBraceletNumber.trim()) {
+          toast({
+            title: "Error",
+            description:
+              "El número de pulsera principal y el del acompañante no pueden ser iguales.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
     }
-
-    // Si tiene acompañante, obligatorio ingresar número de pulsera acompañante
-    if (guest.hasCompanion && !companionBraceletNumber.trim()) {
-      toast({
-        title: "Error",
-        description: "Debes ingresar el número de pulsera del acompañante.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validación: los números de pulsera deben ser únicos en toda la lista
-    const allBracelets = new Set<string>();
-    supabaseGuests.forEach((g) => {
-      if (g.bracelet_number) allBracelets.add(g.bracelet_number.trim());
-      if (g.companion_bracelet_number)
-        allBracelets.add(g.companion_bracelet_number.trim());
-    });
-
-    // Si estamos editando, quitar los actuales del invitado seleccionado
-    const currentGuestData = supabaseGuests.find(
-      (g) => g.guest_id === guest.id
-    );
-    if (currentGuestData) {
-      if (currentGuestData.bracelet_number)
-        allBracelets.delete(currentGuestData.bracelet_number.trim());
-      if (currentGuestData.companion_bracelet_number)
-        allBracelets.delete(currentGuestData.companion_bracelet_number.trim());
-    }
-
-    if (allBracelets.has(braceletNumber.trim())) {
-      toast({
-        title: "Error",
-        description:
-          "El número de pulsera principal ya está asignado a otro invitado.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (
-      guest.hasCompanion &&
-      allBracelets.has(companionBraceletNumber.trim())
-    ) {
-      toast({
-        title: "Error",
-        description:
-          "El número de pulsera del acompañante ya está asignado a otro invitado.",
-        variant: "destructive",
-      });
-      return;
-    }
-    // Además, no pueden ser iguales entre sí
-    if (
-      guest.hasCompanion &&
-      braceletNumber.trim() === companionBraceletNumber.trim()
-    ) {
-      toast({
-        title: "Error",
-        description:
-          "El número de pulsera principal y el del acompañante no pueden ser iguales.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  
     try {
       const { error } = await supabase
         .from("guests")
         .update({
           confirmed: true,
           confirmed_at: new Date().toISOString(),
-          bracelet_number: braceletNumber.trim(),
-          companion_bracelet_number: guest.hasCompanion
-            ? companionBraceletNumber.trim()
-            : null,
+          bracelet_number: braceletNumber.trim() || null,
+          companion_bracelet_number: companionBraceletNumber.trim() || null,
         })
         .eq("guest_id", guest.id);
-
+  
       if (error) throw error;
-
-      setConfirmedGuests((prev) => new Set([...prev, guest.id]));
+  
       setDialogOpen(false);
-      setInfoModalOpen(false);
-
-      // Limpiar estados
       setSelectedGuest(null);
-      setCurrentGuest(null);
-
       toast({
         title: "Invitado confirmado",
-        description: `Pulsera(s) asignada(s) correctamente.`,
+        description: "El invitado ha sido confirmado exitosamente.",
       });
-
-      // Recargar datos para actualizar la vista
       loadGuestsFromSupabase();
     } catch (error: any) {
       console.error("Error updating guest:", error);
       toast({
         title: "Error al actualizar",
-        description: "No se pudo confirmar el invitado.",
+        description: "No se pudo actualizar el estado del invitado.",
         variant: "destructive",
       });
     }
@@ -689,6 +661,7 @@ const EXPORT_FIELD_ORDER = [
                   <span>Provincia: {orderedData["Provincia"] || "-"}</span>
                   <span>Ciudad: {orderedData["Ciudad de donde nos visitas"] || "-"}</span>
                   <span>Moto: {orderedData["Moto en la que venís"] || "-"}</span>
+                  <span>Pagó: {orderedData["Pagó?"] || "No"}</span>
                   {orderedData["Venís acompañado"]?.toString().toLowerCase() === "si" && (
                     <>
                       <span>DNI Acompañante: {orderedData["DNI Acompañante"] || "-"}</span>
@@ -751,7 +724,8 @@ const EXPORT_FIELD_ORDER = [
                     field === "Vas a realizar las rodadas" ||
                     field === "Venís acompañado?" ||
                     field === "Tenés alguna restricción alimentaria?" ||
-                    field === "Cena show día sábado 11 (no incluye bebida)"
+                    field === "Cena show día sábado 11 (no incluye bebida)" ||
+                    field === "Pagó?"
                   ) {
                     // Convertir cualquier valor positivo a "Si" y el resto a "No"
                     const currentValue = isPositiveResponse(currentGuest.data[field]) ? "Si" : "No";
