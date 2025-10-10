@@ -40,7 +40,6 @@ export const CreateAttendeeModal = ({
   const FIELD_ORDER = [
     "DNI",
     "Apellido y Nombre",
-    "braceletNumber",
     "Pais",
     "Provincia",
     "Ciudad de donde nos visitas",
@@ -60,6 +59,7 @@ export const CreateAttendeeModal = ({
     "Venís acompañado?",
     "DNI Acompañante",
     "Apellido y Nombre del acompañante",
+    "braceletNumber",
     "companionBraceletNumber"
   ];
 
@@ -158,7 +158,53 @@ export const CreateAttendeeModal = ({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {FIELD_ORDER.map((field) => {
+          {/* Sección de asignación de pulseras */}
+          <div className="space-y-4 border-b pb-4">
+            <h3 className="text-lg font-semibold text-[#F6762C]">
+              Asignación de Pulseras
+            </h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="bracelet-modal" className="text-right font-medium text-sm" style={{ color: '#F6762C' }}>
+                  NÚMERO DE PULSERA 
+                </Label>
+                <Input
+                  id="bracelet-modal"
+                  placeholder="Ej: 001"
+                  value={newAttendee.braceletNumber || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!validateBraceletNumber(value)) return;
+                    handleFieldChange('braceletNumber', value);
+                  }}
+                  type="number"
+                  className="col-span-3"
+                />
+              </div>
+              {hasCompanion() && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="companion-bracelet-modal" className="text-right font-medium text-sm" style={{ color: '#F6762C' }}>
+                    NÚMERO DE PULSERA ACOMPAÑANTE (OPCIONAL)
+                  </Label>
+                  <Input
+                    id="companion-bracelet-modal"
+                    placeholder="Ej: 002"
+                    value={newAttendee.companionBraceletNumber || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (!validateBraceletNumber(value, true)) return;
+                      handleFieldChange('companionBraceletNumber', value);
+                    }}
+                    type="number"
+                    className="col-span-3"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Campos del formulario */}
+          {FIELD_ORDER.filter(field => field !== 'braceletNumber' && field !== 'companionBraceletNumber').map((field) => {
             if (
               field === "A que sos alérgico?" &&
               newAttendee["Sos alérgico a algo?"] === "No"
@@ -167,8 +213,7 @@ export const CreateAttendeeModal = ({
 
             if (
               (field === "DNI Acompañante" ||
-              field === "Apellido y Nombre del acompañante" ||
-              field === "companionBraceletNumber") &&
+              field === "Apellido y Nombre del acompañante") &&
               !hasCompanion()
             )
               return null;
@@ -184,7 +229,8 @@ export const CreateAttendeeModal = ({
                 field === "Vas a realizar las rodadas" ||
                 field === "Venís acompañado?" ||
                 field === "Tenés alguna restricción alimentaria?" ||
-                field === "Cena show día sábado 11 (no incluye bebida)" ? (
+                field === "Cena show día sábado 11 (no incluye bebida)" ||
+                field === "Pagó?" ? (
                   <Select
                     value={newAttendee[field]}
                     onValueChange={(value) =>
@@ -208,14 +254,7 @@ export const CreateAttendeeModal = ({
                     value={newAttendee[field] || ''}
                     onChange={(e) => handleFieldChange(field, e.target.value)}
                     className="col-span-3"
-                    type={field === "braceletNumber" || field === "companionBraceletNumber" ? "number" : "text"}
-                    placeholder={
-                      field === "braceletNumber" 
-                        ? "Ingrese el número de pulsera (opcional)" 
-                        : field === "companionBraceletNumber"
-                        ? "Ingrese el número de pulsera del acompañante (opcional)"
-                        : ""
-                    }
+                    type="text"
                   />
                 )}
               </div>
